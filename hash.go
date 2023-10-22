@@ -1,6 +1,20 @@
 package diccionario
 
-import "fmt"
+import (
+	"fmt"
+	//"tdas/lista"
+)
+
+type parClaveValor[K comparable, V any] struct {
+	clave K
+	dato  V
+}
+
+type hashAbierto[K comparable, V any] struct {
+	tabla    []TDALista.Lista[parClaveValor[K, V]]
+	tam      int
+	cantidad int
+}
 
 func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
