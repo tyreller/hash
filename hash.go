@@ -124,18 +124,13 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 }
 
 func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
-	for i := iterHash.indice; i < iterHash.dict.tam; i++ {
-		lista := iterHash.dict.tabla[i]
-		if i == iterHash.indice {
-			lista = lista.SubListaDesde(iterHash.posIndice)
-		}
-		listaIter := lista.Iterador()
-		if listaIter.HaySiguiente() {
-			return true
-		}
-		iterHash.indice = i + 1
-		iterHash.posIndice = 0
+	lista := iterHash.dict.tabla[iterHash.indice]
+	iterLista := lista.Iterador()
+
+	if iterLista.HaySiguiente() {
+		return true
 	}
+
 	return false
 }
 
@@ -143,14 +138,6 @@ func (iterHash *iterHashAbierto[K, V]) VerActual() (K, V) {
 	if !iterHash.HaySiguiente() {
 		panic("El iterador terminó de iterar")
 	}
-	lista := iterHash.dict.tabla[iterHash.indice]
-	if iterHash.indice == iterHash.dict.tam-1 {
-		return lista.Ultimo().(parClaveValor[K, V]).clav, lista.Ultimo().(parClaveValor[K, V]).dat
-	}
-	if iterHash.indice == iterHash.dict.tam {
-		return lista.Ultimo().(parClaveValor[K, V]).clav, lista.Ultimo().(parClaveValor[K, V]).dat
-	}
-	return lista.Elemento(iterHash.posIndice).(parClaveValor[K, V]).clav, lista.Elemento(iterHash.posIndice).(parClaveValor[K, V]).dat
 }
 
 func (iterHash *iterHashAbierto[K, V]) Siguiente() {
