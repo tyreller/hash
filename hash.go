@@ -138,6 +138,14 @@ func (iterHash *iterHashAbierto[K, V]) VerActual() (K, V) {
 	if !iterHash.HaySiguiente() {
 		panic("El iterador terminó de iterar")
 	}
+
+	lista := iterHash.dict.tabla[iterHash.indice]
+	listaIter := lista.Iterador()
+	for i := 0; i < iterHash.posIndice; i++ {
+		listaIter.Siguiente()
+	}
+	par := listaIter.VerActual()
+	return par.clav, par.dat
 }
 
 func (iterHash *iterHashAbierto[K, V]) Siguiente() {
