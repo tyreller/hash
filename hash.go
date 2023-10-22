@@ -2,7 +2,7 @@ package diccionario
 
 import (
 	"fmt"
-	//"tdas/lista"
+	TDALista "tdas/lista"
 )
 
 type parClaveValor[K comparable, V any] struct {
@@ -20,8 +20,24 @@ func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
 
-func CrearHash[K comparable, V any]() Diccionario[K, V] {
+//Tamaño variable
+// func CrearHash[K comparable, V any](tam int) Diccionario[K, V] {
+// 	tabla := make([]TDALista.Lista[parClaveValor[K, V]], tam)
+// 	return &hashAbierto[K, V]{
+// 		tabla:    tabla,
+// 		tam:      tam,
+// 		cantidad: 0,
+// 	}
+// }
 
+// Tamaño fijo en 151
+func CrearHash[K comparable, V any]() Diccionario[K, V] {
+	tabla := make([]TDALista.Lista[parClaveValor[K, V]], 151)
+	return &hashAbierto[K, V]{
+		tabla:    tabla,
+		tam:      151,
+		cantidad: 0,
+	}
 }
 
 func Guardar(clave K, dato V) {
