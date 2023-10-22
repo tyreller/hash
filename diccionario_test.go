@@ -13,14 +13,17 @@ var TAMS_VOLUMEN = []int{12500, 25000, 50000, 100000, 200000, 400000}
 func TestDiccionarioVacio(t *testing.T) {
 	t.Log("Comprueba que Diccionario vacio no tiene claves")
 	dic := TDADiccionario.CrearHash[string, string]()
+	t.Log("Se creo con exito")
 	require.EqualValues(t, 0, dic.Cantidad())
+	t.Log("0 en cantidad\n\n")
 	require.False(t, dic.Pertenece("A"))
+	t.Log("Hasta aca no no llega\n\n")
 	require.PanicsWithValue(t, "La clave no pertenece al diccionario", func() { dic.Obtener("A") })
 	require.PanicsWithValue(t, "La clave no pertenece al diccionario", func() { dic.Borrar("A") })
 }
 
 func TestDiccionarioClaveDefault(t *testing.T) {
-	t.Log("Prueba sobre un Hash vacío que si justo buscamos la clave que es el default del tipo de dato, " +
+	t.Log("\n\n\nPrueba sobre un Hash vacío que si justo buscamos la clave que es el default del tipo de dato, " +
 		"sigue sin existir")
 	dic := TDADiccionario.CrearHash[string, string]()
 	require.False(t, dic.Pertenece(""))

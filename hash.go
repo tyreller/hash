@@ -2,6 +2,7 @@ package diccionario
 
 import (
 	"fmt"
+	"tdas/lista"
 	TDALista "tdas/lista"
 )
 
@@ -11,7 +12,7 @@ type parClaveValor[K comparable, V any] struct {
 }
 
 type hashAbierto[K comparable, V any] struct {
-	tabla    []TDALista.Lista[parClaveValor[K, V]]
+	celda    []TDALista.Lista[parClaveValor[K, V]]
 	tam      int
 	cantidad int
 }
@@ -41,17 +42,21 @@ func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 
 // Tamaño fijo en 151, numero primo
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
-	tabla := make([]TDALista.Lista[parClaveValor[K, V]], 151)
+	size := 151
+	celda := make([]TDALista.Lista[parClaveValor[K, V]], size)
+	for i := 0; i < size; i++ {
+		celda[i] = lista.CrearListaEnlazada[parClaveValor[K, V]]()
+	}
 	return &hashAbierto[K, V]{
-		tabla:    tabla,
-		tam:      151,
+		celda:    celda,
+		tam:      size,
 		cantidad: 0,
 	}
 }
 
 func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	indice := h.hashFuncIndice(clave)
-	lista := h.tabla[indice]
+	lista := h.celda[indice]
 	par := parClaveValor[K, V]{clav: clave, dat: dato}
 	lista.InsertarUltimo(par)
 	h.cantidad++
@@ -59,7 +64,8 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 	indice := h.hashFuncIndice(clave)
-	listaIter := h.tabla[indice].Iterador()
+	lista := h.celda[indice]
+	listaIter := lista.Iterador()
 
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
@@ -73,7 +79,7 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 
 func (h *hashAbierto[K, V]) Obtener(clave K) V {
 	indice := h.hashFuncIndice(clave)
-	listaIter := h.tabla[indice].Iterador()
+	listaIter := h.celda[indice].Iterador()
 
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
@@ -87,7 +93,7 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
 	indice := h.hashFuncIndice(clave)
-	listaIter := h.tabla[indice].Iterador()
+	listaIter := h.celda[indice].Iterador()
 
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
@@ -107,7 +113,7 @@ func (h *hashAbierto[K, V]) Cantidad() int {
 
 func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
 	for i := 0; i < h.tam; i++ {
-		listaIter := h.tabla[i].Iterador()
+		listaIter := h.celda[i].Iterador()
 		for listaIter.HaySiguiente() {
 			par := listaIter.VerActual()
 			//Continua hasta que auxFunction devuelva True
@@ -124,7 +130,7 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 }
 
 func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
-	lista := iterHash.dict.tabla[iterHash.indice]
+	lista := iterHash.dict.celda[iterHash.indice]
 	iterLista := lista.Iterador()
 
 	if iterLista.HaySiguiente() {
@@ -139,7 +145,7 @@ func (iterHash *iterHashAbierto[K, V]) VerActual() (K, V) {
 		panic("El iterador terminó de iterar")
 	}
 
-	lista := iterHash.dict.tabla[iterHash.indice]
+	lista := iterHash.dict.celda[iterHash.indice]
 	listaIter := lista.Iterador()
 	for i := 0; i < iterHash.posIndice; i++ {
 		listaIter.Siguiente()
