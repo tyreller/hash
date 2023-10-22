@@ -16,6 +16,12 @@ type hashAbierto[K comparable, V any] struct {
 	cantidad int
 }
 
+type iterHashAbierto[K comparable, V any] struct {
+	dict      *hashAbierto[K, V]
+	indice    int
+	posIndice int
+}
+
 func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
@@ -32,16 +38,6 @@ func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 	indice := hashValue % h.tam
 	return indice
 }
-
-//Tamaño variable
-// func CrearHash[K comparable, V any](tam int) Diccionario[K, V] {
-// 	tabla := make([]TDALista.Lista[parClaveValor[K, V]], tam)
-// 	return &hashAbierto[K, V]{
-// 		tabla:    tabla,
-// 		tam:      tam,
-// 		cantidad: 0,
-// 	}
-// }
 
 // Tamaño fijo en 151, numero primo
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
@@ -109,25 +105,57 @@ func (h *hashAbierto[K, V]) Cantidad() int {
 	return h.cantidad
 }
 
-func (h *hashAbierto[K, V]) Iterar(func(clave K, dato V) bool) {
-
+func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
+	for i := 0; i < h.tam; i++ {
+		listaIter := h.tabla[i].Iterador()
+		for listaIter.HaySiguiente() {
+			par := listaIter.VerActual()
+			//Continua hasta que auxFunction devuelva True
+			if !auxFunction(par.clav, par.dat) {
+				return
+			}
+			listaIter.Siguiente()
+		}
+	}
 }
 
 func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
-
+	return &iterHashAbierto[K, V]{h, 0, 0}
 }
 
-func (h *hashAbierto[K, V]) HaySiguiente() bool {
-
-}
-func (h *hashAbierto[K, V]) VerActual() (K, V) {
-	if VerActual == false {
-		panic("El iterador termino de iterar")
+func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
+	for i := iterHash.indice; i < iterHash.dict.tam; i++ {
+		lista := iterHash.dict.tabla[i]
+		if i == iterHash.indice {
+			lista = lista.SubListaDesde(iterHash.posIndice)
+		}
+		listaIter := lista.Iterador()
+		if listaIter.HaySiguiente() {
+			return true
+		}
+		iterHash.indice = i + 1
+		iterHash.posIndice = 0
 	}
-
+	return false
 }
-func (h *hashAbierto[K, V]) Siguiente() {
-	if VerActual == false {
-		panic("El iterador termino de iterar")
+
+func (iterHash *iterHashAbierto[K, V]) VerActual() (K, V) {
+	if !iterHash.HaySiguiente() {
+		panic("El iterador terminó de iterar")
 	}
+	lista := iterHash.dict.tabla[iterHash.indice]
+	if iterHash.indice == iterHash.dict.tam-1 {
+		return lista.Ultimo().(parClaveValor[K, V]).clav, lista.Ultimo().(parClaveValor[K, V]).dat
+	}
+	if iterHash.indice == iterHash.dict.tam {
+		return lista.Ultimo().(parClaveValor[K, V]).clav, lista.Ultimo().(parClaveValor[K, V]).dat
+	}
+	return lista.Elemento(iterHash.posIndice).(parClaveValor[K, V]).clav, lista.Elemento(iterHash.posIndice).(parClaveValor[K, V]).dat
+}
+
+func (iterHash *iterHashAbierto[K, V]) Siguiente() {
+	if !iterHash.HaySiguiente() {
+		panic("El iterador terminó de iterar")
+	}
+	iterHash.posIndice++
 }
