@@ -46,6 +46,7 @@ func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 // Tamaño fijo en 151, numero primo
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	tabla := make([]TDALista.Lista[parClaveValor[K, V]], fixedSize)
+
 	for i := 0; i < fixedSize; i++ {
 		tabla[i] = lista.CrearListaEnlazada[parClaveValor[K, V]]()
 	}
@@ -62,10 +63,6 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	listaIter := lista.Iterador()
 	par := parClaveValor[K, V]{clav: clave, dat: dato}
 
-	if lista.EstaVacia() {
-		h.cantidad++
-	}
-
 	for listaIter.HaySiguiente() {
 		if listaIter.VerActual().clav == clave {
 			listaIter.Borrar()
@@ -73,7 +70,7 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 			return
 		}
 	}
-
+	h.cantidad++
 	lista.InsertarUltimo(par)
 }
 
@@ -81,7 +78,6 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	listaIter := lista.Iterador()
-
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
 		if par.clav == clave {
@@ -89,6 +85,7 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 		}
 		listaIter.Siguiente()
 	}
+
 	return false
 }
 
@@ -202,6 +199,7 @@ func (iterHash *iterHashAbierto[K, V]) Siguiente() {
 		for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
 			if !tablaHash[i].EstaVacia() {
 				iterHash.indice = i
+				iterHash.posIndice = 0
 				return
 			}
 		}
