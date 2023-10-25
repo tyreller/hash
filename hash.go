@@ -57,11 +57,16 @@ func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	}
 }
 
-func redimensionar(h *hashAbierto[K, V], newSize int) {
+func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 	if !(newSize >= initialSize) {
 		return
 	}
-	newHash := make([]TDALista.Lista[parClaveValor[K, V]], 2*newSize)
+	newTabla := make([]TDALista.Lista[parClaveValor[K, V]], 2*newSize)
+	newHash := hashAbierto[K, V]{
+		tabla:    newTabla,
+		tam:      newSize,
+		cantidad: 0,
+	}
 
 	iterHash := h.Iterador()
 
@@ -69,6 +74,7 @@ func redimensionar(h *hashAbierto[K, V], newSize int) {
 		newHash.Guardar(iterHash.VerActual())
 		iterHash.Siguiente()
 	}
+	*h = newHash
 }
 
 func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
