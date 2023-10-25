@@ -7,7 +7,7 @@ import (
 )
 
 // Tamaño del diccionario, numero primo
-const fixedSize int = 151
+const initialSize int = 151
 
 type parClaveValor[K comparable, V any] struct {
 	clav K
@@ -45,15 +45,29 @@ func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 
 // Tamaño fijo en 151, numero primo
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
-	tabla := make([]TDALista.Lista[parClaveValor[K, V]], fixedSize)
+	tabla := make([]TDALista.Lista[parClaveValor[K, V]], initialSize)
 
-	for i := 0; i < fixedSize; i++ {
+	for i := 0; i < initialSize; i++ {
 		tabla[i] = lista.CrearListaEnlazada[parClaveValor[K, V]]()
 	}
 	return &hashAbierto[K, V]{
 		tabla:    tabla,
-		tam:      fixedSize,
+		tam:      initialSize,
 		cantidad: 0,
+	}
+}
+
+func redimensionar(h *hashAbierto[K, V], newSize int) {
+	if !(newSize >= initialSize) {
+		return
+	}
+	newHash := make([]TDALista.Lista[parClaveValor[K, V]], 2*newSize)
+
+	iterHash := h.Iterador()
+
+	for i := 0; i <= h.Cantidad(); i++ {
+		newHash.Guardar(iterHash.VerActual())
+		iterHash.Siguiente()
 	}
 }
 
@@ -72,6 +86,9 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	}
 	h.cantidad++
 	lista.InsertarUltimo(par)
+	if h.cantidad > 1*h.tam {
+		redimensionar(h, 2*h.tam)
+	}
 }
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
@@ -115,6 +132,9 @@ func (h *hashAbierto[K, V]) Borrar(clave K) V {
 			return par.dat
 		}
 		listaIter.Siguiente()
+		if h.cantidad < h.tam/4 {
+			redimensionar(h, h.tam/2)
+		}
 	}
 	panic("La clave no pertenece al diccionario")
 }
@@ -139,8 +159,13 @@ func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
 
 func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 	primerIndice := 0
+
 	for primerIndice < h.tam && h.tabla[primerIndice].EstaVacia() {
 		primerIndice++
+	}
+	if primerIndice == h.tam {
+		//Si se cumple, significa que esta toda la lista vacia
+		primerIndice = 0
 	}
 	//Busca donde esta la primera celda no-vacia de la tabla
 	return &iterHashAbierto[K, V]{h, primerIndice, 0}
@@ -150,13 +175,14 @@ func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
 	tablaHash := iterHash.dict.tabla
 	iterLista := tablaHash[iterHash.indice].Iterador()
 
-	for i := 0; i < iterHash.posIndice; i++ {
-		iterLista.Siguiente()
-		//Notar que este siguiente es funcion de Lista, no de hash (por lo tanto, no es definicion circular)
-	}
-
 	if iterLista.HaySiguiente() {
-		return true
+		for i := 0; i < iterHash.posIndice; i++ {
+			iterLista.Siguiente()
+			//Notar que este siguiente es funcion de Lista, no de hash (por lo tanto, no es definicion circular)
+		}
+		if iterLista.HaySiguiente() {
+			return true
+		}
 	}
 
 	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
@@ -192,16 +218,18 @@ func (iterHash *iterHashAbierto[K, V]) Siguiente() {
 	for i := 0; i < iterHash.posIndice; i++ {
 		iterLista.Siguiente()
 	}
-
 	if iterLista.HaySiguiente() {
 		iterHash.posIndice++
-	} else {
-		for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
-			if !tablaHash[i].EstaVacia() {
-				iterHash.indice = i
-				iterHash.posIndice = 0
-				return
-			}
+		return
+	}
+
+	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
+		if !tablaHash[i].EstaVacia() {
+			iterHash.indice = i
+			iterHash.posIndice = 0
+			return
 		}
 	}
+	panic("El iterador termino de iterar")
+
 }

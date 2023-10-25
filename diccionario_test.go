@@ -450,8 +450,8 @@ func TestIterarDiccionarioVacio(t *testing.T) {
 	dic := TDADiccionario.CrearHash[string, int]()
 	iter := dic.Iterador()
 	require.False(t, iter.HaySiguiente())
-	// require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
-	// require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
+	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })
 }
 
 func TestDiccionarioIterar(t *testing.T) {
