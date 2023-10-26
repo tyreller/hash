@@ -6,8 +6,8 @@ import (
 	TDALista "tdas/lista"
 )
 
-// Tamaño del diccionario, numero primo
-const initialSize int = 151
+// Tamaño Inicial del diccionario, numero primo
+const initialSize int = 11
 
 type parClaveValor[K comparable, V any] struct {
 	clav K
@@ -30,16 +30,17 @@ func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
 
+// Usa Longitudinal Redundancy Check (LRC)
 func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 	indiceBytes := convertirABytes(clave)
 
-	hashValue := 0
+	lrc := byte(0)
 	for i := 0; i < len(indiceBytes); i++ {
 		b := indiceBytes[i]
-		hashValue += int(b)
+		lrc ^= b
 	}
 
-	indice := hashValue % h.tam
+	indice := int(lrc) % h.tam
 	return indice
 }
 
@@ -70,7 +71,7 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 
 	iterHash := h.Iterador()
 
-	for i := 0; i <= h.Cantidad(); i++ {
+	for i := 0; i < h.Cantidad(); i++ {
 		newHash.Guardar(iterHash.VerActual())
 		iterHash.Siguiente()
 	}
@@ -89,10 +90,13 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 			listaIter.Insertar(par)
 			return
 		}
+		listaIter.Siguiente()
 	}
-	h.cantidad++
+
 	lista.InsertarUltimo(par)
-	if h.cantidad > 1*h.tam {
+	h.cantidad++
+
+	if h.cantidad > h.tam {
 		redimensionar(h, 2*h.tam)
 	}
 }
@@ -179,20 +183,14 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 
 func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
 	tablaHash := iterHash.dict.tabla
-	iterLista := tablaHash[iterHash.indice].Iterador()
+	lista := tablaHash[iterHash.indice]
 
-	if iterLista.HaySiguiente() {
-		for i := 0; i < iterHash.posIndice; i++ {
-			iterLista.Siguiente()
-			//Notar que este siguiente es funcion de Lista, no de hash (por lo tanto, no es definicion circular)
-		}
-		if iterLista.HaySiguiente() {
-			return true
-		}
+	if lista.Largo() > iterHash.posIndice {
+		return true
 	}
 
 	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
-		if !tablaHash[i].EstaVacia() {
+		if !(tablaHash[i].EstaVacia()) {
 			return true
 		}
 	}
@@ -219,23 +217,16 @@ func (iterHash *iterHashAbierto[K, V]) Siguiente() {
 	}
 
 	tablaHash := iterHash.dict.tabla
-	iterLista := tablaHash[iterHash.indice].Iterador()
 
-	for i := 0; i < iterHash.posIndice; i++ {
-		iterLista.Siguiente()
-	}
-	if iterLista.HaySiguiente() {
+	if iterHash.posIndice <= tablaHash[iterHash.indice].Largo() {
 		iterHash.posIndice++
-		return
 	}
 
 	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
-		if !tablaHash[i].EstaVacia() {
+		if !(tablaHash[i].EstaVacia()) {
 			iterHash.indice = i
 			iterHash.posIndice = 0
 			return
 		}
 	}
-	panic("El iterador termino de iterar")
-
 }

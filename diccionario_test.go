@@ -552,6 +552,7 @@ func TestPruebaIterarTrasBorrados(t *testing.T) {
 	require.EqualValues(t, "A", v1)
 	iter.Siguiente()
 	require.False(t, iter.HaySiguiente())
+
 }
 
 func ejecutarPruebasVolumenIterador(b *testing.B, n int) {
