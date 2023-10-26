@@ -107,6 +107,21 @@ func TestReemplazoDato(t *testing.T) {
 	require.EqualValues(t, "baubau", dic.Obtener(clave2))
 }
 
+func TestMuchasVecesMismaClave(t *testing.T) {
+	dic := TDADiccionario.CrearHash[int, int]()
+	for i := 0; i <= 100; i++ {
+		dic.Guardar(1, i)
+	}
+	iterDic := dic.Iterador()
+	for i := 1; i < dic.Cantidad(); i++ {
+		iterDic.Siguiente()
+	}
+	key, dato := iterDic.VerActual()
+	fmt.Print("yes")
+	require.Equal(t, 1, key)
+	require.Equal(t, 100, dato)
+}
+
 func TestReemplazoDatoHopscotch(t *testing.T) {
 	t.Log("Guarda bastantes claves, y luego reemplaza sus datos. Luego valida que todos los datos sean " +
 		"correctos. Para una implementación Hopscotch, detecta errores al hacer lugar o guardar elementos.")
@@ -115,10 +130,12 @@ func TestReemplazoDatoHopscotch(t *testing.T) {
 	for i := 0; i < 500; i++ {
 		dic.Guardar(i, i)
 	}
+	ok := true
 	for i := 0; i < 500; i++ {
 		dic.Guardar(i, 2*i)
 	}
-	ok := true
+
+	ok = true
 	for i := 0; i < 500 && ok; i++ {
 		ok = dic.Obtener(i) == 2*i
 	}
@@ -448,7 +465,13 @@ func BenchmarkDiccionario(b *testing.B) {
 func TestIterarDiccionarioVacio(t *testing.T) {
 	t.Log("Iterar sobre diccionario vacio es simplemente tenerlo al final")
 	dic := TDADiccionario.CrearHash[string, int]()
+	dic.Guardar("a", 1)
+	dic.Guardar("b", 2)
+	dic.Guardar("c", 3)
 	iter := dic.Iterador()
+	iter.Siguiente()
+	iter.Siguiente()
+	iter.Siguiente()
 	require.False(t, iter.HaySiguiente())
 	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.VerActual() })
 	require.PanicsWithValue(t, "El iterador termino de iterar", func() { iter.Siguiente() })

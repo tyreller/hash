@@ -7,7 +7,7 @@ import (
 )
 
 // Tamaño Inicial del diccionario, numero primo
-const initialSize int = 11
+const initialSize int = 5
 
 type parClaveValor[K comparable, V any] struct {
 	clav K
@@ -44,7 +44,6 @@ func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 	return indice
 }
 
-// Tamaño fijo en 151, numero primo
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	tabla := make([]TDALista.Lista[parClaveValor[K, V]], initialSize)
 
@@ -59,19 +58,26 @@ func CrearHash[K comparable, V any]() Diccionario[K, V] {
 }
 
 func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
-	if !(newSize >= initialSize) {
+	if newSize < initialSize {
 		return
 	}
-	newTabla := make([]TDALista.Lista[parClaveValor[K, V]], 2*newSize)
+	newTabla := make([]TDALista.Lista[parClaveValor[K, V]], newSize)
+	for i := 0; i < newSize; i++ {
+		newTabla[i] = lista.CrearListaEnlazada[parClaveValor[K, V]]()
+	}
+
 	newHash := hashAbierto[K, V]{
 		tabla:    newTabla,
 		tam:      newSize,
 		cantidad: 0,
 	}
-
+	n := h.Cantidad()
 	iterHash := h.Iterador()
 
-	for i := 0; i < h.Cantidad(); i++ {
+	for i := 0; i < n; i++ {
+		// key, value := iterHash.VerActual()
+		// par := parClaveValor[K, V]{clav: key, dat: value}
+		// newHash.Guardar(par.clav, par.dat)
 		newHash.Guardar(iterHash.VerActual())
 		iterHash.Siguiente()
 	}
@@ -96,8 +102,8 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	lista.InsertarUltimo(par)
 	h.cantidad++
 
-	if h.cantidad > h.tam {
-		redimensionar(h, 2*h.tam)
+	if h.cantidad > 2*h.tam {
+		redimensionar(h, 4*h.tam)
 	}
 }
 
@@ -217,9 +223,11 @@ func (iterHash *iterHashAbierto[K, V]) Siguiente() {
 	}
 
 	tablaHash := iterHash.dict.tabla
+	lista := tablaHash[iterHash.indice]
 
-	if iterHash.posIndice <= tablaHash[iterHash.indice].Largo() {
+	if lista.Largo() > iterHash.posIndice+1 {
 		iterHash.posIndice++
+		return
 	}
 
 	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
@@ -229,4 +237,5 @@ func (iterHash *iterHashAbierto[K, V]) Siguiente() {
 			return
 		}
 	}
+	iterHash.posIndice++
 }
