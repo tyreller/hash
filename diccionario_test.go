@@ -129,16 +129,16 @@ func TestReemplazoDatoHopscotch(t *testing.T) {
 	dic := TDADiccionario.CrearHash[int, int]()
 	for i := 0; i < 500; i++ {
 		dic.Guardar(i, i)
+		value := dic.Obtener(i)
+		require.Equal(t, i, value)
 	}
 	ok := true
 	for i := 0; i < 500; i++ {
 		dic.Guardar(i, 2*i)
+		value := dic.Obtener(i)
+		require.Equal(t, 2*i, value)
 	}
 
-	ok = true
-	for i := 0; i < 500 && ok; i++ {
-		ok = dic.Obtener(i) == 2*i
-	}
 	require.True(t, ok, "Los elementos no fueron actualizados correctamente")
 }
 

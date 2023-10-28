@@ -1,9 +1,12 @@
 package diccionario
 
 import (
+	"encoding/binary"
 	"fmt"
 	"tdas/lista"
 	TDALista "tdas/lista"
+
+	"crypto/sha256"
 )
 
 // Tamaño Inicial del diccionario, numero primo
@@ -30,18 +33,11 @@ func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
 
-// Usa Longitudinal Redundancy Check (LRC)
 func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
-	indiceBytes := convertirABytes(clave)
-
-	lrc := byte(0)
-	for i := 0; i < len(indiceBytes); i++ {
-		b := indiceBytes[i]
-		lrc ^= b
-	}
-
-	indice := int(lrc) % h.tam
-	return indice
+	bytes := convertirABytes(clave)
+	hash := sha256.Sum256(bytes)
+	indice := binary.LittleEndian.Uint32(hash[:])
+	return int(indice % uint32(h.tam))
 }
 
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
