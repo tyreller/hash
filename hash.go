@@ -67,13 +67,9 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 		tam:      newSize,
 		cantidad: 0,
 	}
-	n := h.Cantidad()
-	iterHash := h.Iterador()
 
-	for i := 0; i < n; i++ {
-		// key, value := iterHash.VerActual()
-		// par := parClaveValor[K, V]{clav: key, dat: value}
-		// newHash.Guardar(par.clav, par.dat)
+	iterHash := h.Iterador()
+	for iterHash.HaySiguiente() {
 		newHash.Guardar(iterHash.VerActual())
 		iterHash.Siguiente()
 	}
@@ -81,6 +77,10 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 }
 
 func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
+	if h.cantidad > 2*h.tam {
+		redimensionar(h, 4*h.tam)
+	}
+
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	listaIter := lista.Iterador()
@@ -97,10 +97,6 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 
 	lista.InsertarUltimo(par)
 	h.cantidad++
-
-	if h.cantidad > 2*h.tam {
-		redimensionar(h, 4*h.tam)
-	}
 }
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
@@ -133,6 +129,10 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
+	if h.cantidad < h.tam/4 {
+		redimensionar(h, h.tam/2)
+	}
+
 	indice := h.hashFuncIndice(clave)
 	listaIter := h.tabla[indice].Iterador()
 
@@ -144,9 +144,7 @@ func (h *hashAbierto[K, V]) Borrar(clave K) V {
 			return par.dat
 		}
 		listaIter.Siguiente()
-		if h.cantidad < h.tam/4 {
-			redimensionar(h, h.tam/2)
-		}
+
 	}
 	panic("La clave no pertenece al diccionario")
 }
