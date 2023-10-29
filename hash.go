@@ -1,16 +1,14 @@
 package diccionario
 
 import (
-	"encoding/binary"
 	"fmt"
+	"hash/crc32"
 	"tdas/lista"
 	TDALista "tdas/lista"
-
-	"crypto/sha256"
 )
 
 // Tamaño Inicial del diccionario, numero primo
-const initialSize int = 5
+const initialSize int = 19
 
 type parClaveValor[K comparable, V any] struct {
 	clav K
@@ -35,9 +33,10 @@ func convertirABytes[K comparable](clave K) []byte {
 
 func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 	bytes := convertirABytes(clave)
-	hash := sha256.Sum256(bytes)
-	indice := binary.LittleEndian.Uint32(hash[:])
-	return int(indice % uint32(h.tam))
+	hash := crc32.ChecksumIEEE(bytes)
+	index := hash % uint32(h.tam)
+	return int(index)
+
 }
 
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
@@ -68,10 +67,14 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 		cantidad: 0,
 	}
 
-	iterHash := h.Iterador()
-	for iterHash.HaySiguiente() {
-		newHash.Guardar(iterHash.VerActual())
-		iterHash.Siguiente()
+	for i := 0; i < h.tam; i++ {
+		iterLista := h.tabla[i].Iterador()
+		for iterLista.HaySiguiente() {
+			iterClave := iterLista.VerActual().clav
+			iterDato := iterLista.VerActual().dat
+			newHash.Guardar(iterClave, iterDato)
+			iterLista.Siguiente()
+		}
 	}
 	*h = newHash
 }
