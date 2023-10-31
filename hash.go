@@ -23,7 +23,6 @@ type parClaveValor[K comparable, V any] struct {
 
 type hashAbierto[K comparable, V any] struct {
 	tabla    []TDALista.Lista[parClaveValor[K, V]]
-	tam      int
 	cantidad int
 }
 
@@ -40,7 +39,7 @@ func convertirABytes[K comparable](clave K) []byte {
 func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 	bytes := convertirABytes(clave)
 	hash := crc32.ChecksumIEEE(bytes)
-	index := hash % uint32(h.tam)
+	index := hash % uint32(len(h.tabla))
 	return int(index)
 
 }
@@ -57,7 +56,6 @@ func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	tabla := crearTabla[K, V](INITIAL_SIZE)
 	return &hashAbierto[K, V]{
 		tabla:    tabla,
-		tam:      INITIAL_SIZE,
 		cantidad: 0,
 	}
 }
@@ -68,13 +66,12 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 	}
 	//Save old values
 	oldTabla := h.tabla
-	oldSize := h.tam
+	oldSize := len(h.tabla)
 
 	newTabla := crearTabla[K, V](newSize)
 
 	//Replace values
 	h.tabla = newTabla
-	h.tam = newSize
 
 	for i := 0; i < oldSize; i++ {
 		iterLista := oldTabla[i].Iterador()
@@ -86,16 +83,35 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 
 }
 
+/*
+	dic.Iterar(func(c int, v int) bool {
+			if !seguirEjecutando {
+				siguioEjecutandoCuandoNoDebia = true
+				return false
+			}
+			if c%100 == 0 {
+				seguirEjecutando = false
+				return false
+			}
+			return true
+		})
+*/
 func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
-	if h.cantidad > h.tam*BIGGER_SIZE_THRESHOLD {
-		redimensionar(h, h.tam*BIGGER_HASH_FACTOR)
+	if h.cantidad > len(h.tabla)*BIGGER_SIZE_THRESHOLD {
+		redimensionar(h, len(h.tabla)*BIGGER_HASH_FACTOR)
 	}
 
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	listaIter := lista.Iterador()
 	par := parClaveValor[K, V]{clave: clave, dato: dato}
+	/*
+		dic.Iterar(func(clave K, dato V) bool {
+			if  {
 
+			}
+		}
+	*/
 	for listaIter.HaySiguiente() {
 		if listaIter.VerActual().clave == clave {
 			listaIter.Borrar()
@@ -139,8 +155,8 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
-	if h.cantidad < h.tam/SMALLER_SIZE_THRESHOLD {
-		redimensionar(h, h.tam/SMALLER_HASH_FACTOR)
+	if h.cantidad < len(h.tabla)/SMALLER_SIZE_THRESHOLD {
+		redimensionar(h, len(h.tabla)/SMALLER_HASH_FACTOR)
 	}
 
 	indice := h.hashFuncIndice(clave)
@@ -164,7 +180,7 @@ func (h *hashAbierto[K, V]) Cantidad() int {
 }
 
 func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
-	for i := 0; i < h.tam; i++ {
+	for i := 0; i < len(h.tabla); i++ {
 		listaIter := h.tabla[i].Iterador()
 		for listaIter.HaySiguiente() {
 			par := listaIter.VerActual()
@@ -180,10 +196,10 @@ func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
 func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 	primerIndice := 0
 
-	for primerIndice < h.tam && h.tabla[primerIndice].EstaVacia() {
+	for primerIndice < len(h.tabla) && h.tabla[primerIndice].EstaVacia() {
 		primerIndice++
 	}
-	if primerIndice == h.tam {
+	if primerIndice == len(h.tabla) {
 		//Si se cumple, significa que esta toda la lista vacia
 		primerIndice = 0
 	}
@@ -199,7 +215,7 @@ func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
 		return true
 	}
 
-	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
+	for i := iterHash.indice + 1; i < len(iterHash.dict.tabla); i++ {
 		if !(tablaHash[i].EstaVacia()) {
 			return true
 		}
@@ -234,7 +250,7 @@ func (iterHash *iterHashAbierto[K, V]) Siguiente() {
 		return
 	}
 
-	for i := iterHash.indice + 1; i < iterHash.dict.tam; i++ {
+	for i := iterHash.indice + 1; i < len(iterHash.dict.tabla); i++ {
 		if !(tablaHash[i].EstaVacia()) {
 			iterHash.indice = i
 			iterHash.posIndice = 0
