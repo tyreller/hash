@@ -54,6 +54,7 @@ func crearTabla[K comparable, V any](size int) []TDALista.Lista[parClaveValor[K,
 
 func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	tabla := crearTabla[K, V](INITIAL_SIZE)
+
 	return &hashAbierto[K, V]{
 		tabla:    tabla,
 		cantidad: 0,
@@ -64,14 +65,14 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 	if newSize < INITIAL_SIZE {
 		return
 	}
+
 	//Save old values
 	oldTabla := h.tabla
 	oldSize := len(h.tabla)
 
-	newTabla := crearTabla[K, V](newSize)
-
-	//Replace values
-	h.tabla = newTabla
+	//Make new table and reset elements counter
+	h.tabla = crearTabla[K, V](newSize)
+	h.cantidad = 0
 
 	for i := 0; i < oldSize; i++ {
 		iterLista := oldTabla[i].Iterador()
@@ -80,22 +81,8 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 			iterLista.Siguiente()
 		}
 	}
-
 }
 
-/*
-	dic.Iterar(func(c int, v int) bool {
-			if !seguirEjecutando {
-				siguioEjecutandoCuandoNoDebia = true
-				return false
-			}
-			if c%100 == 0 {
-				seguirEjecutando = false
-				return false
-			}
-			return true
-		})
-*/
 func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	if h.cantidad > len(h.tabla)*BIGGER_SIZE_THRESHOLD {
 		redimensionar(h, len(h.tabla)*BIGGER_HASH_FACTOR)
@@ -105,13 +92,7 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	lista := h.tabla[indice]
 	listaIter := lista.Iterador()
 	par := parClaveValor[K, V]{clave: clave, dato: dato}
-	/*
-		dic.Iterar(func(clave K, dato V) bool {
-			if  {
 
-			}
-		}
-	*/
 	for listaIter.HaySiguiente() {
 		if listaIter.VerActual().clave == clave {
 			listaIter.Borrar()
@@ -200,7 +181,7 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 		primerIndice++
 	}
 	if primerIndice == len(h.tabla) {
-		//Si se cumple, significa que esta toda la lista vacia
+		//Si se cumple, significa que esta toda el hash esta vacia
 		primerIndice = 0
 	}
 	//Busca donde esta la primera celda no-vacia de la tabla
