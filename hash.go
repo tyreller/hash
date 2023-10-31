@@ -107,32 +107,42 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 }
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
-	indice := h.hashFuncIndice(clave)
-	lista := h.tabla[indice]
-	listaIter := lista.Iterador()
-	for listaIter.HaySiguiente() {
-		par := listaIter.VerActual()
+
+	var pertenece bool = false
+	perteneceFunc := func(par parClaveValor[K, V]) bool {
 		if par.clave == clave {
-			return true
+			pertenece = true
+			return false // Para parar de Iterar
 		}
-		listaIter.Siguiente()
+		return true
 	}
 
-	return false
+	indice := h.hashFuncIndice(clave)
+	lista := h.tabla[indice]
+	lista.Iterar(perteneceFunc)
+
+	return pertenece
 }
 
 func (h *hashAbierto[K, V]) Obtener(clave K) V {
-	indice := h.hashFuncIndice(clave)
-	listaIter := h.tabla[indice].Iterador()
-
-	for listaIter.HaySiguiente() {
-		par := listaIter.VerActual()
-		if par.clave == clave {
-			return par.dato
-		}
-		listaIter.Siguiente()
+	if !h.Pertenece(clave) {
+		panic("La clave no pertenece al diccionario")
 	}
-	panic("La clave no pertenece al diccionario")
+
+	var dato V
+	obtenerFunc := func(par parClaveValor[K, V]) bool {
+		if par.clave == clave {
+			dato = par.dato
+			return false // Para parar de Iterar
+		}
+		return true
+	}
+
+	indice := h.hashFuncIndice(clave)
+	lista := h.tabla[indice]
+	lista.Iterar(obtenerFunc)
+
+	return dato
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
