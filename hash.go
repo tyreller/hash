@@ -8,11 +8,17 @@ import (
 )
 
 // Tamaño Inicial del diccionario, numero primo
-const initialSize int = 19
+const INITIAL_SIZE int = 19
+
+const BIGGER_SIZE_THRESHOLD int = 8
+const BIGGER_HASH_FACTOR int = 2
+
+const SMALLER_SIZE_THRESHOLD int = 8
+const SMALLER_HASH_FACTOR int = 2
 
 type parClaveValor[K comparable, V any] struct {
-	clav K
-	dat  V
+	clave K
+	dato  V
 }
 
 type hashAbierto[K comparable, V any] struct {
@@ -39,58 +45,59 @@ func (h *hashAbierto[K, V]) hashFuncIndice(clave K) int {
 
 }
 
-func CrearHash[K comparable, V any]() Diccionario[K, V] {
-	tabla := make([]TDALista.Lista[parClaveValor[K, V]], initialSize)
-
-	for i := 0; i < initialSize; i++ {
+func crearTabla[K comparable, V any](size int) []TDALista.Lista[parClaveValor[K, V]] {
+	tabla := make([]TDALista.Lista[parClaveValor[K, V]], size)
+	for i := 0; i < size; i++ {
 		tabla[i] = lista.CrearListaEnlazada[parClaveValor[K, V]]()
 	}
+	return tabla
+}
+
+func CrearHash[K comparable, V any]() Diccionario[K, V] {
+	tabla := crearTabla[K, V](INITIAL_SIZE)
 	return &hashAbierto[K, V]{
 		tabla:    tabla,
-		tam:      initialSize,
+		tam:      INITIAL_SIZE,
 		cantidad: 0,
 	}
 }
 
 func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
-	if newSize < initialSize {
+	if newSize < INITIAL_SIZE {
 		return
 	}
-	newTabla := make([]TDALista.Lista[parClaveValor[K, V]], newSize)
-	for i := 0; i < newSize; i++ {
-		newTabla[i] = lista.CrearListaEnlazada[parClaveValor[K, V]]()
-	}
+	//Save old values
+	oldTabla := h.tabla
+	oldSize := h.tam
 
-	newHash := hashAbierto[K, V]{
-		tabla:    newTabla,
-		tam:      newSize,
-		cantidad: 0,
-	}
+	newTabla := crearTabla[K, V](newSize)
 
-	for i := 0; i < h.tam; i++ {
-		iterLista := h.tabla[i].Iterador()
+	//Replace values
+	h.tabla = newTabla
+	h.tam = newSize
+
+	for i := 0; i < oldSize; i++ {
+		iterLista := oldTabla[i].Iterador()
 		for iterLista.HaySiguiente() {
-			iterClave := iterLista.VerActual().clav
-			iterDato := iterLista.VerActual().dat
-			newHash.Guardar(iterClave, iterDato)
+			h.Guardar(iterLista.VerActual().clave, iterLista.VerActual().dato)
 			iterLista.Siguiente()
 		}
 	}
-	*h = newHash
+
 }
 
 func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
-	if h.cantidad > 2*h.tam {
-		redimensionar(h, 4*h.tam)
+	if h.cantidad > h.tam*BIGGER_SIZE_THRESHOLD {
+		redimensionar(h, h.tam*BIGGER_HASH_FACTOR)
 	}
 
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	listaIter := lista.Iterador()
-	par := parClaveValor[K, V]{clav: clave, dat: dato}
+	par := parClaveValor[K, V]{clave: clave, dato: dato}
 
 	for listaIter.HaySiguiente() {
-		if listaIter.VerActual().clav == clave {
+		if listaIter.VerActual().clave == clave {
 			listaIter.Borrar()
 			listaIter.Insertar(par)
 			return
@@ -108,7 +115,7 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 	listaIter := lista.Iterador()
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
-		if par.clav == clave {
+		if par.clave == clave {
 			return true
 		}
 		listaIter.Siguiente()
@@ -123,8 +130,8 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
-		if par.clav == clave {
-			return par.dat
+		if par.clave == clave {
+			return par.dato
 		}
 		listaIter.Siguiente()
 	}
@@ -132,8 +139,8 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
-	if h.cantidad < h.tam/4 {
-		redimensionar(h, h.tam/2)
+	if h.cantidad < h.tam/SMALLER_SIZE_THRESHOLD {
+		redimensionar(h, h.tam/SMALLER_HASH_FACTOR)
 	}
 
 	indice := h.hashFuncIndice(clave)
@@ -141,10 +148,10 @@ func (h *hashAbierto[K, V]) Borrar(clave K) V {
 
 	for listaIter.HaySiguiente() {
 		par := listaIter.VerActual()
-		if par.clav == clave {
+		if par.clave == clave {
 			listaIter.Borrar()
 			h.cantidad--
-			return par.dat
+			return par.dato
 		}
 		listaIter.Siguiente()
 
@@ -162,7 +169,7 @@ func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
 		for listaIter.HaySiguiente() {
 			par := listaIter.VerActual()
 			//Continua hasta que auxFunction devuelva True
-			if !auxFunction(par.clav, par.dat) {
+			if !auxFunction(par.clave, par.dato) {
 				return
 			}
 			listaIter.Siguiente()
@@ -211,7 +218,7 @@ func (iterHash *iterHashAbierto[K, V]) VerActual() (K, V) {
 		listaIter.Siguiente()
 	}
 	par := listaIter.VerActual()
-	return par.clav, par.dat
+	return par.clave, par.dato
 }
 
 func (iterHash *iterHashAbierto[K, V]) Siguiente() {
