@@ -112,7 +112,7 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 	perteneceFunc := func(par parClaveValor[K, V]) bool {
 		if par.clave == clave {
 			pertenece = true
-			return false // Para parar de Iterar
+			return false // Para de Iterar
 		}
 		return true
 	}
@@ -133,7 +133,7 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 	obtenerFunc := func(par parClaveValor[K, V]) bool {
 		if par.clave == clave {
 			dato = par.dato
-			return false // Para parar de Iterar
+			return false // Para de Iterar
 		}
 		return true
 	}
@@ -146,22 +146,22 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
-	if h.cantidad < len(h.tabla)/SMALLER_SIZE_THRESHOLD {
-		redimensionar(h, len(h.tabla)/SMALLER_HASH_FACTOR)
-	}
-
-	indice := h.hashFuncIndice(clave)
-	listaIter := h.tabla[indice].Iterador()
-
-	for listaIter.HaySiguiente() {
-		par := listaIter.VerActual()
-		if par.clave == clave {
-			listaIter.Borrar()
-			h.cantidad--
-			return par.dato
+	if h.Pertenece(clave) {
+		if h.cantidad < len(h.tabla)/SMALLER_SIZE_THRESHOLD {
+			redimensionar(h, len(h.tabla)/SMALLER_HASH_FACTOR)
 		}
-		listaIter.Siguiente()
 
+		indice := h.hashFuncIndice(clave)
+		listaIter := h.tabla[indice].Iterador()
+		for listaIter.HaySiguiente() {
+			par := listaIter.VerActual()
+			if par.clave == clave {
+				listaIter.Borrar()
+				h.cantidad--
+				return par.dato
+			}
+			listaIter.Siguiente()
+		}
 	}
 	panic("La clave no pertenece al diccionario")
 }
@@ -187,6 +187,7 @@ func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
 func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 	primerIndice := 0
 
+	//Busca donde esta la primera celda no-vacia de la tabla
 	for primerIndice < len(h.tabla) && h.tabla[primerIndice].EstaVacia() {
 		primerIndice++
 	}
@@ -194,7 +195,6 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 		//Si se cumple, significa que esta toda el hash esta vacia
 		primerIndice = 0
 	}
-	//Busca donde esta la primera celda no-vacia de la tabla
 	return &iterHashAbierto[K, V]{h, primerIndice, 0}
 }
 
