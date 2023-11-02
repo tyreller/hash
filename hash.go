@@ -90,9 +90,15 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
-	listaIter := lista.Iterador()
 	par := parClaveValor[K, V]{clave: clave, dato: dato}
 
+	if !h.Pertenece(clave) {
+		lista.InsertarUltimo(par)
+		h.cantidad++
+		return
+	}
+
+	listaIter := lista.Iterador()
 	for listaIter.HaySiguiente() {
 		if listaIter.VerActual().clave == clave {
 			listaIter.Borrar()
@@ -101,9 +107,6 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 		}
 		listaIter.Siguiente()
 	}
-
-	lista.InsertarUltimo(par)
-	h.cantidad++
 }
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
@@ -195,6 +198,7 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 		//Si se cumple, significa que esta toda el hash esta vacia
 		primerIndice = 0
 	}
+
 	return &iterHashAbierto[K, V]{h, primerIndice, 0}
 }
 
