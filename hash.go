@@ -106,7 +106,7 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 			return
 		}
 		listaIter.Siguiente()
-	}
+	}	
 }
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
@@ -149,22 +149,19 @@ func (h *hashAbierto[K, V]) Obtener(clave K) V {
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
-	if h.Pertenece(clave) {
-		if h.cantidad < len(h.tabla)/SMALLER_SIZE_THRESHOLD {
-			redimensionar(h, len(h.tabla)/SMALLER_HASH_FACTOR)
-		}
-
-		indice := h.hashFuncIndice(clave)
-		listaIter := h.tabla[indice].Iterador()
-		for listaIter.HaySiguiente() {
-			par := listaIter.VerActual()
-			if par.clave == clave {
-				listaIter.Borrar()
-				h.cantidad--
-				return par.dato
+	indice := h.hashFuncIndice(clave)
+	listaIter := h.tabla[indice].Iterador()
+	for listaIter.HaySiguiente() {
+		par := listaIter.VerActual()
+		if par.clave == clave {
+			listaIter.Borrar()
+			h.cantidad--
+			if h.cantidad < len(h.tabla)/SMALLER_SIZE_THRESHOLD {
+				redimensionar(h, len(h.tabla)/SMALLER_HASH_FACTOR)
 			}
-			listaIter.Siguiente()
+			return par.dato
 		}
+		listaIter.Siguiente()
 	}
 	panic("La clave no pertenece al diccionario")
 }
