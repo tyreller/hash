@@ -66,7 +66,6 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 	if newSize < INITIAL_SIZE {
 		return
 	}
-
 	//Save old values
 	oldTabla := h.tabla
 	oldSize := len(h.tabla)
@@ -74,7 +73,6 @@ func redimensionar[K comparable, V any](h *hashAbierto[K, V], newSize int) {
 	//Make new table and reset elements counter
 	h.tabla = crearTabla[K, V](newSize)
 	h.cantidad = 0
-
 	for i := 0; i < oldSize; i++ {
 		iterLista := oldTabla[i].Iterador()
 		for iterLista.HaySiguiente() {
@@ -88,16 +86,9 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 	if h.cantidad > len(h.tabla)*BIGGER_SIZE_THRESHOLD {
 		redimensionar(h, len(h.tabla)*BIGGER_HASH_FACTOR)
 	}
-
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	par := parClaveValor[K, V]{clave: clave, dato: dato}
-
-	if !h.Pertenece(clave) {
-		lista.InsertarUltimo(par)
-		h.cantidad++
-		return
-	}
 	listaIter := lista.Iterador()
 	for listaIter.HaySiguiente() {
 		if listaIter.VerActual().clave == clave {
@@ -106,11 +97,13 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 			return
 		}
 		listaIter.Siguiente()
-	}	
+	}
+	lista.InsertarUltimo(par)
+		h.cantidad++
+		return
 }
 
 func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
-
 	var pertenece bool = false
 	perteneceFunc := func(par parClaveValor[K, V]) bool {
 		if par.clave == clave {
@@ -119,7 +112,6 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 		}
 		return true
 	}
-
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	lista.Iterar(perteneceFunc)
@@ -128,24 +120,23 @@ func (h *hashAbierto[K, V]) Pertenece(clave K) bool {
 }
 
 func (h *hashAbierto[K, V]) Obtener(clave K) V {
-	if !h.Pertenece(clave) {
-		panic("La clave no pertenece al diccionario")
-	}
-
 	var dato V
+	contador := 0
 	obtenerFunc := func(par parClaveValor[K, V]) bool {
 		if par.clave == clave {
 			dato = par.dato
+			contador ++
 			return false // Para de Iterar
 		}
 		return true
 	}
-
 	indice := h.hashFuncIndice(clave)
 	lista := h.tabla[indice]
 	lista.Iterar(obtenerFunc)
-
-	return dato
+	if contador> 0{
+		return dato
+	}
+	panic("La clave no pertenece al diccionario")
 }
 
 func (h *hashAbierto[K, V]) Borrar(clave K) V {
@@ -186,7 +177,6 @@ func (h *hashAbierto[K, V]) Iterar(auxFunction func(clave K, dato V) bool) {
 
 func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 	primerIndice := 0
-
 	//Busca donde esta la primera celda no-vacia de la tabla
 	for primerIndice < len(h.tabla) && h.tabla[primerIndice].EstaVacia() {
 		primerIndice++
@@ -196,7 +186,6 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 		primerIndice = 0
 	}
 	iteradorLista:= h.tabla[primerIndice].Iterador()
-
 	return &iterHashAbierto[K, V]{h, primerIndice, 0,iteradorLista}
 }
 
