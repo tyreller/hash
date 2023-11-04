@@ -30,6 +30,7 @@ type iterHashAbierto[K comparable, V any] struct {
 	dict      *hashAbierto[K, V]
 	indice    int
 	posIndice int
+	iteradorLista TDALista.IteradorLista[parClaveValor[K, V]]
 }
 
 func convertirABytes[K comparable](clave K) []byte {
@@ -97,7 +98,6 @@ func (h *hashAbierto[K, V]) Guardar(clave K, dato V) {
 		h.cantidad++
 		return
 	}
-
 	listaIter := lista.Iterador()
 	for listaIter.HaySiguiente() {
 		if listaIter.VerActual().clave == clave {
@@ -198,8 +198,9 @@ func (h *hashAbierto[K, V]) Iterador() IterDiccionario[K, V] {
 		//Si se cumple, significa que esta toda el hash esta vacia
 		primerIndice = 0
 	}
+	iteradorLista:= h.tabla[primerIndice].Iterador()
 
-	return &iterHashAbierto[K, V]{h, primerIndice, 0}
+	return &iterHashAbierto[K, V]{h, primerIndice, 0,iteradorLista}
 }
 
 func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
@@ -217,13 +218,17 @@ func (iterHash *iterHashAbierto[K, V]) HaySiguiente() bool {
 	}
 	return false
 }
+func (iterHash *iterHashAbierto[K, V]) actualizarIteradorLista() {
+	iterHash.iteradorLista = iterHash.dict.tabla[iterHash.indice].Iterador()
+}
 
 func (iterHash *iterHashAbierto[K, V]) VerActual() (K, V) {
 	if !iterHash.HaySiguiente() {
 		panic("El iterador termino de iterar")
 	}
 
-	listaIter := iterHash.dict.tabla[iterHash.indice].Iterador()
+	iterHash.actualizarIteradorLista()
+	listaIter := iterHash.iteradorLista
 
 	for i := 0; i < iterHash.posIndice; i++ {
 		listaIter.Siguiente()
